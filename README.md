@@ -49,9 +49,9 @@ The **Master Library Ingestion Pipeline** is a serverless video processing syste
 │                    Cloudflare Workers Platform                  │
 ├─────────────────────────────────────────────────────────────────┤
 │  ┌─────────────────┐    ┌─────────────────┐    ┌─────────────┐  │
-│  │   fetch()        │   │  scheduled()    │    │  Webhooks   │  │
-│  │   - Webhook      │   │  - Trigger Job  │    │  - Stream   │  │
-│  │     Handler      │   │    (5-min cron  │    │    Events   │  │
+│  │   fetch()       │    │  scheduled()    │    │  Webhooks   │  │
+│  │   - Webhook     │    │  - Trigger Job  │    │  - Stream   │  │
+│  │     Handler     │    │    (5-min cron  │    │    Events   │  │
 │  └────────┬────────┘    └────────┬────────┘    └──────┬──────┘  │
 │           │                      │                    │         │
 │           ▼                      ▼                    ▼         │
