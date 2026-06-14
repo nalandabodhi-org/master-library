@@ -5,6 +5,7 @@ unit-tested without hitting the network.  At call-site these are executed
 using the Cloudflare Workers `fetch()` global.
 """
 
+import json
 from urllib.parse import quote
 
 # ------------------------------------------------------------------
@@ -117,27 +118,26 @@ def build_stream_import_request(
         Keys: ``method``, ``url``, ``headers``, ``body`` (the JSON dict),
         ``body_json`` (the serialised string).
     """
+    # Bug 3: Use /stream/copy endpoint for URL-based imports (not /video)
+    # Body uses {"url": "...", "meta": {...}} per Cloudflare Stream docs
     body = {
-        "input_type": "upload",
-        "source": {
-            "type": "url",
-            "url": source_url,
-        },
+        "url": source_url,
     }
     if slug:
-        body["metadata"] = {"slug": slug}
+        body["meta"] = {"slug": slug}
 
     headers = {
         "Authorization": f"Bearer {api_token}",
         "Content-Type": "application/json",
     }
 
+    # Bug 3: endpoint /stream/copy (not /video)
     return {
         "method": "POST",
-        "url": STREAM_API_BASE.format(account_id=account_id) + "/video",
+        "url": STREAM_API_BASE.format(account_id=account_id) + "/stream/copy",
         "headers": headers,
         "body": body,
-        "body_json": __body_json(body),
+        "body_json": _body_json(body),
     }
 
 
@@ -218,7 +218,7 @@ def verify_stream_webhook(
 # Helpers
 # ------------------------------------------------------------------
 
-def __body_json(body: dict) -> str:
-    """Serialise a body dict to JSON (local import to avoid stdlib at top-level)."""
-    import json
+# Minor: renamed from __body_json to _body_json (avoid misleading dunder)
+def _body_json(body: dict) -> str:
+    """Serialise a body dict to JSON."""
     return json.dumps(body)

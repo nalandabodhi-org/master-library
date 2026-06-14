@@ -1,7 +1,7 @@
 ALLOWED_TRANSITIONS = {
     "draft": {"ready_for_ingest"},
     "ready_for_ingest": {"ingesting", "error"},
-    "ingesting": {"processing", "error"},
+    "ingesting": {"processing", "ready_to_stream", "error"},
     "processing": {"ready_to_stream", "error"},
     "ready_to_stream": set(),
     "error": {"ready_for_ingest"},

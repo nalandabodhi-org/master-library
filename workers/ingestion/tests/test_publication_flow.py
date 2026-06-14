@@ -64,9 +64,10 @@ def test_build_stream_import_request_uses_r2_url():
 
     assert request["method"] == "POST"
     assert "acc123" in request["url"]
+    assert "stream/copy" in request["url"]
     assert request["headers"]["Authorization"] == "Bearer tok"
     assert request["headers"]["Content-Type"] == "application/json"
-    assert request["body"]["source"]["url"] == "https://acc123.r2.cloudflarestorage.com/v1/public/videos/test.mp4"
+    assert request["body"]["url"] == "https://acc123.r2.cloudflarestorage.com/v1/public/videos/test.mp4"
 
 
 def test_build_stream_import_request_includes_slug_metadata():
@@ -78,7 +79,7 @@ def test_build_stream_import_request_includes_slug_metadata():
         slug="heart-sutra",
     )
 
-    assert request["body"]["metadata"]["slug"] == "heart-sutra"
+    assert request["body"]["meta"]["slug"] == "heart-sutra"
 
 
 # -- parse_stream_import_response --

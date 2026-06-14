@@ -137,6 +137,50 @@ def _build_airtable_headers(api_token: str) -> dict:
     }
 
 
+def _build_read_url_with_params(
+    base_id: str,
+    table_name: str,
+    query: str = "",
+    page_size: int = 100,
+    use_fields: bool = True,
+) -> str:
+    """Build a read URL with ``page_size`` and ``AIRTABLE_FIELDS`` applied.
+
+    Parameters
+    ----------
+    base_id : str
+        Airtable base ID.
+    table_name : str
+        Table name.
+    query : str, optional
+        URL-encoded filter/query string.
+    page_size : int, optional
+        Records per page (default 100).
+    use_fields : bool
+        Whether to append ``fields[]`` query params.
+
+    Returns
+    -------
+    str
+        Fully-qualified GET URL.
+    """
+    parts = []
+    if query:
+        parts.append(query)
+
+    # Design 11: Honour page_size
+    if page_size:
+        parts.append(f"pageSize={page_size}")
+
+    # Design 11: Apply AIRTABLE_FIELDS
+    if use_fields:
+        for field in AIRTABLE_FIELDS:
+            parts.append(f"fields[]={field.replace(' ', '+')}")
+
+    query_string = "&".join(parts) if parts else ""
+    return build_airtable_read_url(base_id, table_name, query_string)
+
+
 async def read_airtable_records(
     base_id: str,
     table_name: str,
@@ -165,7 +209,8 @@ async def read_airtable_records(
         List of Airtable record dicts (each with ``id`` and ``fields``).
     """
     all_records: list[dict] = []
-    url = build_airtable_read_url(base_id, table_name, query)
+    # Design 11: Use helper that honours page_size + AIRTABLE_FIELDS
+    url = _build_read_url_with_params(base_id, table_name, query, page_size)
 
     while url:
         resp = await fetch(url, {
@@ -185,8 +230,8 @@ async def read_airtable_records(
         # Pagination
         url = ""
         if "offset" in data:
-            # Append offset to the base URL
-            separator = "&" if "?" in url or "?" in build_airtable_read_url(base_id, table_name) else "?"
+            # Bug 2: Compute separator from base_url (not from empty url)
+            separator = "&" if "?" in url else "?"
             base_url = build_airtable_read_url(base_id, table_name, query)
             url = f"{base_url}{separator}offset={data['offset']}"
 

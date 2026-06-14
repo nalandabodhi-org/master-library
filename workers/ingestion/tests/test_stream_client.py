@@ -63,9 +63,7 @@ def test_build_stream_import_request_includes_payload():
         api_token="tok_xyz",
     )
     body = request["body"]
-    assert body["input_type"] == "upload"
-    assert body["source"]["type"] == "url"
-    assert body["source"]["url"] == "https://assets.example/video.mp4"
+    assert body["url"] == "https://assets.example/video.mp4"
 
 
 def test_build_stream_import_request_sets_metadata_from_slug():
@@ -75,7 +73,7 @@ def test_build_stream_import_request_sets_metadata_from_slug():
         api_token="tok_xyz",
         slug="heart-sutra-part-1",
     )
-    assert request["body"]["metadata"]["slug"] == "heart-sutra-part-1"
+    assert request["body"]["meta"]["slug"] == "heart-sutra-part-1"
 
 
 # -- Status check URL --

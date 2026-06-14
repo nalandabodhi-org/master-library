@@ -19,7 +19,7 @@ from src import stream_client as stream_client_mod
 # ------------------------------------------------------------------
 
 
-def _dispatch_http(
+async def _dispatch_http(  # Bug 1: was sync def, now async
     url: str,
     options: dict,
     http_client: object = None,
@@ -41,8 +41,8 @@ def _dispatch_http(
         Response object with ``.ok``, ``.text()``, ``.json()``.
     """
     if http_client is not None:
-        return http_client.request(url, options)
-    return fetch(url, options)
+        return await http_client.request(url, options)  # Bug 1: now awaited
+    return await fetch(url, options)  # Bug 1: now awaited
 
 
 # ------------------------------------------------------------------
@@ -193,13 +193,7 @@ async def execute_publication_flow(
                 "error": f"Airtable write failed: {exc}",
             }
     else:
-        # Direct Airtable API call (Cloudflare Workers global fetch)
-        encoded_table = quote_plus(table_name)
-        url = f"https://api.airtable.com/v0/{base_id}/{encoded_table}/{record_id}"
-        headers = {
-            "Authorization": f"Bearer {api_token}",
-            "Content-Type": "application/json",
-        }
+        # Design 10: Replaced hand-rolled PATCH with update_airtable_record
         patch = {
             "fields": {
                 "Cloudflare UID": parsed["cloudflare_uid"],
@@ -207,18 +201,14 @@ async def execute_publication_flow(
                 "Last Sync Error": "",
             }
         }
-
-        resp = await _dispatch_http(url, {
-            "method": "PATCH",
-            "headers": headers,
-            "body": json.dumps(patch),
-        }, http_client=http_client)
-
-        if not resp.ok:
-            body = await resp.text()
+        try:
+            await update_airtable_record(
+                base_id, table_name, record_id, api_token, patch
+            )
+        except Exception as exc:
             return {
                 "success": False,
-                "error": f"Airtable update failed ({resp.status}): {body}",
+                "error": f"Airtable update failed: {exc}",
             }
 
     return {
